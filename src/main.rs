@@ -4,10 +4,12 @@ use std::fs::{File, self};
 use std::path::{PathBuf, Path};
 use std::env;
 use clap::{Parser, Subcommand, ValueEnum};
-use plugins::{LanguagePlugin, JavascriptPlugin};
+use errors::Error;
+use plugins::{LanguagePlugin, JavascriptPlugin, RubyPlugin, GoPlugin, RustPlugin};
 use serde::{Serialize, Deserialize};
 use commands::{init, add_changeset, ProjectConfig};
 
+pub mod errors;
 pub mod commands;
 pub mod plugins;
 
@@ -28,15 +30,15 @@ impl Language {
       },
 
       Language::Ruby => {
-        Box::new(JavascriptPlugin {})
+        Box::new(RubyPlugin {})
       },
 
       Language::Go => {
-        Box::new(JavascriptPlugin {})
+        Box::new(GoPlugin {})
       }
 
       Language::Rust => {
-        Box::new(JavascriptPlugin {})
+        Box::new(RustPlugin {})
       },
     }
 
@@ -49,10 +51,6 @@ pub enum BumpType {
   Patch,
   Minor,
   Major
-}
-
-enum ProjectError {
-  InvalidConfig
 }
 
 /// Search for a pattern in a file and display the lines that contain it.
@@ -93,11 +91,12 @@ fn main() -> std::io::Result<()> {
     }
 }
 
-fn validate_project(changeset_path: &PathBuf) -> Result<(), ProjectError> {
+fn validate_project(changeset_path: &PathBuf) -> Result<(), Error> {
   let config_path = changeset_path.join("config.json");
-  let config_file = fs::read(config_path).unwrap();
-  let config_str = String::from_utf8(config_file).unwrap();
-  let config: ProjectConfig = serde_json::from_str(&config_str).unwrap();
+  let config_file = fs::read(config_path)?;
+  let config_str = String::from_utf8(config_file)?;
+  let config: ProjectConfig = serde_json::from_str(&config_str)?;
   let language_plugin = config.language.plugin();
+  language_plugin.validate_language()?;
   Ok(())
 }
