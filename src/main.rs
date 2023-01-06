@@ -1,8 +1,9 @@
 #![allow(unused)]
 
-use std::fs::{File, self};
+use std::fs::{File, self, FileType};
 use std::path::{PathBuf, Path};
 use std::env;
+use std::ffi::OsStr;
 use clap::{Parser, Subcommand, ValueEnum};
 use errors::Error;
 use plugins::{LanguagePlugin, JavascriptPlugin, RubyPlugin, GoPlugin, RustPlugin};
@@ -70,7 +71,8 @@ enum Commands {
     Init {
         #[arg(short, long, value_enum)]
         language: Language
-    }
+    },
+    Version
 }
 
 fn main() -> Result<()> {
@@ -80,16 +82,22 @@ fn main() -> Result<()> {
     match &cli.command {
         Some(Commands::Init { language }) => {
             init(&project_root, language)
-        }
+        },
 
         Some(Commands::Add { bump }) => {
             let changesetti_path = project_root.join(".changesetti");
             validate_project(&changesetti_path, &project_root)?;
             add_changeset(&changesetti_path, bump)
-        }
+        },
+
+        Some(Commands::Version) => {
+            let changeset_path = project_root.join(".changesetti");
+            consume_changesets(&changeset_path)
+        },
+
         None => {
           Ok(())
-        }
+        },
     }
 }
 
@@ -100,5 +108,18 @@ fn validate_project(changeset_path: &PathBuf, project_path: &PathBuf) -> Result<
   let config: ProjectConfig = serde_json::from_str(&config_str)?;
   let language_plugin = config.language.plugin();
   language_plugin.validate_language(project_path)?;
+  Ok(())
+}
+
+fn consume_changesets(changeset_path: &PathBuf) -> Result<()> {
+  let changeset_dir = fs::read_dir(changeset_path.join(""))?;
+  for entry in changeset_dir {
+    let entry = entry?;
+    let file_type = entry.file_type()?;
+    let md_ext_str = OsStr::new("md");
+    if file_type.is_file() && entry.path().extension().unwrap().eq(md_ext_str) {
+      let changeset_file = fs::read(entry.path());
+    }
+  }
   Ok(())
 }
