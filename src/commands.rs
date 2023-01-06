@@ -3,9 +3,11 @@ use std::fs;
 use std::path::PathBuf;
 use std::collections::HashMap;
 
+use anyhow::{Context, Result};
+
 use serde::{Serialize, Deserialize};
 
-use crate::{Language, BumpType};
+use crate::{Language, BumpType, errors::Error};
 
 #[derive(Serialize, Deserialize)]
 pub struct ProjectConfig {
@@ -18,7 +20,7 @@ struct ChangsetConfig {
   bump: BumpType
 }
 
-pub fn init(project_root: &PathBuf, language: &Language) -> std::io::Result<()> {
+pub fn init(project_root: &PathBuf, language: &Language) -> Result<()> {
   fs::create_dir(project_root.join(".changesetti"))?;
   let mut config_file = fs::File::create(project_root.join(".changesetti").join("config.json"))?;
   let config = ProjectConfig {
@@ -29,7 +31,7 @@ pub fn init(project_root: &PathBuf, language: &Language) -> std::io::Result<()> 
   Ok(())
 }
 
-pub fn add_changeset(path: &PathBuf, bump_type: &BumpType) -> std::io::Result<()> {
+pub fn add_changeset(path: &PathBuf, bump_type: &BumpType) -> Result<()> {
   let path = path.join(human_id::id("-", false)).with_extension("md");
   let mut front_matter = String::from("---\n");
   let changeset_config = ChangsetConfig { name: String::from("package-name"), bump: *bump_type };

@@ -8,6 +8,7 @@ use errors::Error;
 use plugins::{LanguagePlugin, JavascriptPlugin, RubyPlugin, GoPlugin, RustPlugin};
 use serde::{Serialize, Deserialize};
 use commands::{init, add_changeset, ProjectConfig};
+use anyhow::{Context, Result};
 
 pub mod errors;
 pub mod commands;
@@ -72,7 +73,7 @@ enum Commands {
     }
 }
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<()> {
     let cli = Cli::parse();
     let project_root = env::current_dir()?;
 
@@ -83,6 +84,7 @@ fn main() -> std::io::Result<()> {
 
         Some(Commands::Add { bump }) => {
             let changesetti_path = project_root.join(".changesetti");
+            validate_project(&changesetti_path, &project_root)?;
             add_changeset(&changesetti_path, bump)
         }
         None => {
@@ -91,12 +93,12 @@ fn main() -> std::io::Result<()> {
     }
 }
 
-fn validate_project(changeset_path: &PathBuf) -> Result<(), Error> {
+fn validate_project(changeset_path: &PathBuf, project_path: &PathBuf) -> Result<()> {
   let config_path = changeset_path.join("config.json");
-  let config_file = fs::read(config_path)?;
+  let config_file = fs::read(&config_path).with_context(|| format!("Failed to read project config from {}, does it exist?", config_path.display()))?;
   let config_str = String::from_utf8(config_file)?;
   let config: ProjectConfig = serde_json::from_str(&config_str)?;
   let language_plugin = config.language.plugin();
-  language_plugin.validate_language()?;
+  language_plugin.validate_language(project_path)?;
   Ok(())
 }
