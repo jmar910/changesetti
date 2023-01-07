@@ -15,7 +15,7 @@ pub struct ProjectConfig {
 }
 
 #[derive(Serialize, Deserialize)]
-struct ChangsetConfig {
+pub struct ChangsetConfig {
   name: String,
   bump: BumpType
 }

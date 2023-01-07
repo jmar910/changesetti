@@ -8,8 +8,9 @@ use clap::{Parser, Subcommand, ValueEnum};
 use errors::Error;
 use plugins::{LanguagePlugin, JavascriptPlugin, RubyPlugin, GoPlugin, RustPlugin};
 use serde::{Serialize, Deserialize};
-use commands::{init, add_changeset, ProjectConfig};
+use commands::{init, add_changeset, ProjectConfig, ChangsetConfig};
 use anyhow::{Context, Result};
+use yaml_front_matter::{Document, YamlFrontMatter};
 
 pub mod errors;
 pub mod commands;
@@ -118,7 +119,8 @@ fn consume_changesets(changeset_path: &PathBuf) -> Result<()> {
     let file_type = entry.file_type()?;
     let md_ext_str = OsStr::new("md");
     if file_type.is_file() && entry.path().extension().unwrap().eq(md_ext_str) {
-      let changeset_file = fs::read(entry.path());
+      let changset_str = String::from_utf8(fs::read(entry.path())?)?;
+      let changeset = YamlFrontMatter::parse::<ChangsetConfig>(&changset_str);
     }
   }
   Ok(())
