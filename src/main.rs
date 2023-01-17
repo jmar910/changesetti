@@ -76,7 +76,8 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Add {
-        bump: BumpType
+        bump: BumpType,
+        summary: String
     },
     Init {
         #[arg(short, long, value_enum)]
@@ -94,10 +95,10 @@ fn main() -> Result<()> {
             cmd::init::execute(&project_root, language)
         },
 
-        Some(Commands::Add { bump }) => {
+        Some(Commands::Add { bump, summary }) => {
             let changeset_path = project_root.join(".changesetti");
             cmd::validate_project(&changeset_path, &project_root)?;
-            cmd::add::execute(&changeset_path, &project_root, bump)
+            cmd::add::execute(&changeset_path, &project_root, bump, &summary)
         },
 
         Some(Commands::Version) => {
