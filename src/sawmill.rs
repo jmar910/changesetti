@@ -30,7 +30,8 @@ impl Changelog {
     }
   }
 
-  pub fn update(&mut self, change_groups: &Vec<(String, &Vec<String>)>, group_name: &str) {
+  pub fn update(&mut self, change_groups: &Vec<(String, &Vec<String>)>, updated_version: &str) {
+    writeln!(self.file, "## {}", updated_version);
     for group in change_groups {
       self.write_change_group(&group.0, group.1);
     }
