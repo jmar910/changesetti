@@ -1,15 +1,11 @@
 #![allow(unused)]
 
-use std::fs::{File, self, FileType};
-use std::path::{PathBuf, Path};
+use std::fs::File;
 use std::{env, fmt};
-use std::ffi::OsStr;
 use clap::{Parser, Subcommand, ValueEnum};
 use plugins::{LanguagePlugin, JavascriptPlugin, RubyPlugin, GoPlugin, RustPlugin};
-use sawmill::Sawmill;
 use serde::{Serialize, Deserialize};
-use anyhow::{Context, Result};
-use yaml_front_matter::{Document, YamlFrontMatter};
+use anyhow::Result;
 
 pub mod plugins;
 pub mod sawmill;
@@ -98,7 +94,7 @@ fn main() -> Result<()> {
         Some(Commands::Add { bump, summary }) => {
             let changeset_path = project_root.join(".changesetti");
             cmd::validate_project(&changeset_path, &project_root)?;
-            cmd::add::execute(&changeset_path, &project_root, bump, &summary)
+            cmd::add::execute(&changeset_path, &project_root, bump, summary)
         },
 
         Some(Commands::Version) => {

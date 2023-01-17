@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 use std::{io::prelude::*, fs::DirEntry};
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 use anyhow::Result;
 use yaml_front_matter::{Document, YamlFrontMatter};
 
@@ -9,7 +9,7 @@ use crate::BumpType;
 use crate::cmd::{validate_and_get_config, ChangsetConfig};
 use crate::sawmill::Sawmill;
 
-pub fn execute(changeset_path: &PathBuf, project_path: &PathBuf) -> Result<()> {
+pub fn execute(changeset_path: &Path, project_path: &Path) -> Result<()> {
   let change_list = consume_changesets(changeset_path, project_path)?;
   let (changes, dir_entries): (Vec<Document<ChangsetConfig>>, Vec<DirEntry>) = change_list.into_iter().unzip();
   update_changelog(changeset_path, project_path, &changes)?;
@@ -17,7 +17,7 @@ pub fn execute(changeset_path: &PathBuf, project_path: &PathBuf) -> Result<()> {
   Ok(())
 }
 
-fn consume_changesets(changeset_path: &PathBuf, project_path: &PathBuf) -> Result<Vec<(Document<ChangsetConfig>, DirEntry)>> {
+fn consume_changesets(changeset_path: &Path, project_path: &Path) -> Result<Vec<(Document<ChangsetConfig>, DirEntry)>> {
   let changeset_dir = fs::read_dir(changeset_path)?;
   let mut change_list: Vec<(Document<ChangsetConfig>, DirEntry)> = Vec::new();
 
@@ -37,14 +37,14 @@ fn consume_changesets(changeset_path: &PathBuf, project_path: &PathBuf) -> Resul
   Ok(change_list)
 }
 
-fn update_changelog(changeset_path: &PathBuf, project_path: &PathBuf, changes: &Vec<Document<ChangsetConfig>>) -> Result<()> {
+fn update_changelog(changeset_path: &Path, project_path: &Path, changes: &[Document<ChangsetConfig>]) -> Result<()> {
   let language_plugin = validate_and_get_config(changeset_path)?.language.plugin();
   let bumped_version = language_plugin.bump_version(&changes.first().unwrap().metadata.bump)?;
   let project_name = language_plugin.package_name(project_path)?;
 
-  let major_changes = collect_changes(&changes, &BumpType::Major);
-  let minor_changes = collect_changes(&changes, &BumpType::Minor);
-  let patch_changes = collect_changes(&changes, &BumpType::Patch);
+  let major_changes = collect_changes(changes, &BumpType::Major);
+  let minor_changes = collect_changes(changes, &BumpType::Minor);
+  let patch_changes = collect_changes(changes, &BumpType::Patch);
 
   let change_groups = vec![(BumpType::Major.to_string(), &major_changes), (BumpType::Minor.to_string(), &minor_changes), (BumpType::Patch.to_string(), &patch_changes)];
 
@@ -55,11 +55,11 @@ fn update_changelog(changeset_path: &PathBuf, project_path: &PathBuf, changes: &
   Ok(())
 }
 
-fn collect_changes(changes: &Vec<Document<ChangsetConfig>>, bump_type: &BumpType) -> Vec<String> {
+fn collect_changes(changes: &[Document<ChangsetConfig>], bump_type: &BumpType) -> Vec<String> {
   changes.iter().filter(|change| change.metadata.bump == *bump_type).map(|change| change.content.to_string()).collect::<Vec<String>>()
 }
 
-fn delete_markdown_entries(dir_entries: &Vec<DirEntry>) {
+fn delete_markdown_entries(dir_entries: &[DirEntry]) {
   for dir_entry in dir_entries {
     fs::remove_file(dir_entry.path());
   }

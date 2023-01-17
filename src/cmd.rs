@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 use std::fs;
 use anyhow::{Context, Result};
 use serde::{Serialize, Deserialize};
@@ -16,14 +16,14 @@ pub struct ChangsetConfig {
   pub bump: BumpType
 }
 
-pub fn validate_and_get_config(changeset_path: &PathBuf) -> Result<ProjectConfig> {
+pub fn validate_and_get_config(changeset_path: &Path) -> Result<ProjectConfig> {
   let config_path = changeset_path.join("config.json");
   let config_str = fs::read_to_string(&config_path).with_context(|| format!("Failed to read project config from {}, does it exist?", config_path.display()))?;
   let config: ProjectConfig = serde_json::from_str(&config_str)?;
   Ok(config)
 }
 
-pub fn validate_project(changeset_path: &PathBuf, project_path: &PathBuf) -> Result<()> {
+pub fn validate_project(changeset_path: &Path, project_path: &Path) -> Result<()> {
   let config: ProjectConfig = validate_and_get_config(changeset_path)?;
   let language_plugin = config.language.plugin();
   language_plugin.validate_language(project_path)?;

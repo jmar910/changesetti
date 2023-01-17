@@ -1,12 +1,12 @@
 use std::io::prelude::*;
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 use anyhow::Result;
 
 use crate::Language;
 use crate::cmd::ProjectConfig;
 
-pub fn execute(project_root: &PathBuf, language: &Language) -> Result<()> {
+pub fn execute(project_root: &Path, language: &Language) -> Result<()> {
   fs::create_dir(project_root.join(".changesetti"))?;
   let mut config_file = fs::File::create(project_root.join(".changesetti").join("config.json"))?;
   let config = ProjectConfig {

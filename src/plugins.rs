@@ -1,12 +1,12 @@
 
 use anyhow::{anyhow, Result};
 
-use std::{io, string, fs, path::PathBuf, process::Command};
+use std::{io, string, fs, path::Path, process::Command};
 
 use crate::BumpType;
 
 pub trait LanguagePlugin {
-  fn validate_language(&self, project_path: &PathBuf) -> Result<()> {
+  fn validate_language(&self, project_path: &Path) -> Result<()> {
     Ok(())
   }
 
@@ -14,7 +14,7 @@ pub trait LanguagePlugin {
     Ok(String::from(""))
   }
 
-  fn package_name(&self, project_path: &PathBuf) -> Result<String> {
+  fn package_name(&self, project_path: &Path) -> Result<String> {
     Ok(String::from(""))
   }
 }
@@ -25,7 +25,7 @@ pub struct GoPlugin {}
 pub struct RustPlugin {}
 
 impl LanguagePlugin for JavascriptPlugin {
-  fn validate_language(&self, project_path: &PathBuf) -> Result<()> {
+  fn validate_language(&self, project_path: &Path) -> Result<()> {
     // TODO: Inspect package.json as an extra layer of validation
     let package_json = fs::read(project_path.join("package.json"))?;
     Ok(())
@@ -35,7 +35,7 @@ impl LanguagePlugin for JavascriptPlugin {
     let bump_str = bump.to_string();
     let output = Command::new("npm").args(["version", &bump_str, "--git-tag-version=false"]).output()?;
     let output_str = String::from_utf8(output.stdout)?;
-    let version_str = output_str.trim().strip_prefix("v");
+    let version_str = output_str.trim().strip_prefix('v');
 
     match version_str {
       Some(version) => { Ok(version.to_string()) }
@@ -43,7 +43,7 @@ impl LanguagePlugin for JavascriptPlugin {
     }
   }
 
-  fn package_name(&self, project_path: &PathBuf) -> Result<String> {
+  fn package_name(&self, project_path: &Path) -> Result<String> {
     let package_path = project_path.join("package.json");
     let node_eval = format!("require('{}').name", package_path.to_string_lossy());
     let output = Command::new("node").args(["-p", &node_eval]).output()?;
