@@ -40,22 +40,23 @@ fn consume_changesets(changeset_path: &PathBuf, project_path: &PathBuf) -> Resul
 fn update_changelog(changeset_path: &PathBuf, project_path: &PathBuf, changes: &Vec<Document<ChangsetConfig>>) -> Result<()> {
   let language_plugin = validate_and_get_config(changeset_path)?.language.plugin();
   let bumped_version = language_plugin.bump_version(&changes.first().unwrap().metadata.bump)?;
+  let project_name = language_plugin.package_name(project_path)?;
 
   let major_changes = collect_changes(&changes, &BumpType::Major);
   let minor_changes = collect_changes(&changes, &BumpType::Minor);
   let patch_changes = collect_changes(&changes, &BumpType::Patch);
 
-  let change_groups = vec![&major_changes, &minor_changes, &patch_changes];
+  let change_groups = vec![(BumpType::Major.to_string(), &major_changes), (BumpType::Minor.to_string(), &minor_changes), (BumpType::Patch.to_string(), &patch_changes)];
 
-  let mut changelog = Sawmill::new(project_path).open_changelog()?;
+  let mut changelog = Sawmill::new(project_path, &project_name).open_changelog()?;
 
-  changelog.update(&change_groups);
+  changelog.update(&change_groups, &bumped_version);
   changelog.close();
   Ok(())
 }
 
-fn collect_changes(change_list: &Vec<Document<ChangsetConfig>>, bump_type: &BumpType) -> Vec<String> {
-  change_list.iter().filter(|change| change.metadata.bump == *bump_type).map(|change| change.content.to_string()).collect::<Vec<String>>()
+fn collect_changes(changes: &Vec<Document<ChangsetConfig>>, bump_type: &BumpType) -> Vec<String> {
+  changes.iter().filter(|change| change.metadata.bump == *bump_type).map(|change| change.content.to_string()).collect::<Vec<String>>()
 }
 
 fn delete_markdown_entries(dir_entries: &Vec<DirEntry>) {

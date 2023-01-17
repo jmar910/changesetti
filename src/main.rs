@@ -95,9 +95,9 @@ fn main() -> Result<()> {
         },
 
         Some(Commands::Add { bump }) => {
-            let changesetti_path = project_root.join(".changesetti");
-            cmd::validate_project(&changesetti_path, &project_root)?;
-            cmd::add::execute(&changesetti_path, bump)
+            let changeset_path = project_root.join(".changesetti");
+            cmd::validate_project(&changeset_path, &project_root)?;
+            cmd::add::execute(&changeset_path, &project_root, bump)
         },
 
         Some(Commands::Version) => {
